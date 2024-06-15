@@ -13,6 +13,7 @@ cflags = [
   '-fno-plt',
   '-fno-unwind-tables',
   '-ggdb3',
+  '-Wall',
   '-Werror=return-type',
   '-Werror=type-limits',
   '-Werror=incompatible-pointer-types'
