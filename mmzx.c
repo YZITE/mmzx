@@ -138,6 +138,7 @@ void mmzx_run_on_dir(DIR *dir, const char *path) {
 
     for(mmzx_name_ent_t *item = names.names; item->name; ++item) {
         const char *old_name = item->orig_name;
+        // TODO: don't run chmod on symlinks (this could break links pointing to folders)
         if(-1 == fchmodat(cur_dirfd, old_name, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, 0)) {
             switch(errno) {
                 case ENOENT:
