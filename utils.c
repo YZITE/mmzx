@@ -5,10 +5,9 @@
 
 #include "utils.h"
 #include <assert.h>
-#include <string.h>
 #include <ctype.h>
-
-#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 // find last file extension
 size_t mmzx_find_ext(const char *name) {

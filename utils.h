@@ -6,7 +6,6 @@
 #pragma once
 #include <stdbool.h>
 #include <stddef.h>
-#include <stdlib.h>
 
 // find last file extension
 size_t mmzx_find_ext(const char *name);

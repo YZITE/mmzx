@@ -6,6 +6,7 @@
 #include "utils.h"
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/dirent.h>
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -37,7 +38,11 @@ void mmzx_run_on_dir(DIR *dir, const char *path) {
         const size_t curnamlen = strlen(ditem->d_name);
 
         if(ditem->d_type == DT_DIR) {
-            const int next_dirfd = openat(cur_dirfd, ditem->d_name, O_RDONLY | O_NDELAY | O_DIRECTORY | O_LARGEFILE | O_CLOEXEC);
+            const int next_dirfd = openat(cur_dirfd, ditem->d_name, O_RDONLY | O_NDELAY | O_DIRECTORY | O_CLOEXEC
+#ifdef YHAS_O_LARGEFILE
+                | O_LARGEFILE
+#endif
+            );
             DIR *next_dir = fdopendir(next_dirfd);
             if(!next_dir) {
                 if(next_dirfd >= 0) {
@@ -154,15 +159,25 @@ void mmzx_run_on_dir(DIR *dir, const char *path) {
 
         printf("\tMV %s -> %s; ", old_name, new_name);
 
-        if(-1 == renameat2(cur_dirfd, old_name, cur_dirfd, new_name, RENAME_NOREPLACE)) {
-            printf("ERR: ");
-            if(errno == EEXIST) {
-                printf("destination already exists\n");
+        if(-1 == faccessat(cur_dirfd, new_name, W_OK, 0)) {
+            switch(errno) {
+                case EACCES:
+                    printf("ERR: destination already exists, inaccessible\n");
+                    continue;
+
+                case ENOENT:
+                    break;
+
+                default:
+                    break;
+            }
+            if(-1 == renameat(cur_dirfd, old_name, cur_dirfd, new_name)) {
+                printf("ERR: rename failed; %s\n", strerror(errno));
             } else {
-                printf("rename failed; %s\n", strerror(errno));
+                printf("OK\n");
             }
         } else {
-            printf("OK\n");
+            printf("ERR: destination already exists\n");
         }
     }
 
