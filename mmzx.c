@@ -6,7 +6,9 @@
 #include "utils.h"
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/dirent.h>
+#ifdef YHAS_SYS_DIRENT
+# include <sys/dirent.h>
+#endif
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>

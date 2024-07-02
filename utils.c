@@ -89,8 +89,8 @@ void mmzx_deinit_name_ent(mmzx_name_ent_t *self) {
 
 void mmzx_deinit_names(mmzx_names_t *self) {
     mmzx_name_ent_t *names = self->names;
-    for(size_t i = 0; i < self->length; ++names) {
-        mmzx_deinit_name_ent(names);
+    for(size_t i = 0; i < self->length; ++i) {
+        mmzx_deinit_name_ent(&names[i]);
     }
     free((void*) self->names);
     self->names = 0;

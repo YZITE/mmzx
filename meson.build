@@ -16,6 +16,8 @@ int main() {
 }
 ''', name : 'has largefile support')
 
+res_sys_dirent = compiler.has_header('sys/dirent.h')
+
 cflags = [
   '-D_DEFAULT_SOURCE',
   '-D__BSD_VISIBLE=1',
@@ -32,6 +34,10 @@ cflags = [
 
 if res_largefile
   cflags += ['-DYHAS_O_LARGEFILE']
+endif
+
+if res_sys_dirent
+  cflags += ['-DYHAS_SYS_DIRENT']
 endif
 
 incdot = include_directories('.')
