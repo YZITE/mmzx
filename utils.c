@@ -44,39 +44,20 @@ bool mmzx_has_known_ext(const char *ext) {
     return false;
 }
 
-static inline const char * mmzx_str_identity(const void *x) {
-    assert(x);
-    return *((const char **)x);
-}
+// update leading common substring
+void mmzx_update_llcs(size_t *retlen, const char *first, const char *next) {
+    if((!retlen) || (!first) || (!next)) return;
 
-// find leading common substring
-size_t mmzx_lcs(const char *const *items) {
-    return mmzx_lcs_map((const void *)items, sizeof(const char *), mmzx_str_identity);
-}
-
-size_t mmzx_lcs_map(const void *items, size_t itemlen, const char *mapfn(const void *)) {
-    if(!items) return 0;
-    const char * ret = mapfn(items);
-    if(!ret) return 0;
-    size_t retlen = strlen(ret);
-
-    for(items += itemlen; retlen; items += itemlen) {
-        const char *item = mapfn(items);
-        if(!item) break;
-        const char *retcpy = ret;
-        size_t i = 0;
-        for(; i < retlen; ++i, ++item, ++retcpy) {
-            assert(*retcpy);
-            if(*item != *retcpy) {
-                retlen = i;
-                break;
-            } else if(!*item) {
-                break;
-            }
+    size_t i = 0;
+    for(; i < *retlen; ++i, ++first, ++next) {
+        assert(*first);
+        if(*next != *first) {
+            *retlen = i;
+            break;
+        } else if(!*next) {
+            break;
         }
     }
-
-    return retlen;
 }
 
 void mmzx_deinit_name_ent(mmzx_name_ent_t *self) {

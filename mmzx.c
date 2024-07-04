@@ -17,11 +17,6 @@
 #include <string.h>
 #include <unistd.h>
 
-static const char *mmzx_extract_name(const void *item) {
-    const mmzx_name_ent_t *real_item = (const mmzx_name_ent_t *) item;
-    return real_item->name;
-}
-
 void mmzx_run_on_dir(DIR *dir, const char *path) {
     mmzx_names_t names;
     names.names = 0;
@@ -30,7 +25,10 @@ void mmzx_run_on_dir(DIR *dir, const char *path) {
 
     const size_t pathlen = strlen(path);
     const int cur_dirfd = dirfd(dir);
+
     struct dirent *ditem;
+    const char *firstname = 0;
+    size_t llcs = 0;
 
     while((ditem = readdir(dir))) {
         // skip hidden items
@@ -91,48 +89,53 @@ void mmzx_run_on_dir(DIR *dir, const char *path) {
             goto names_cleanup;
         }
 
-        char *const ext = &dup_name_new[extoffset];
-        mmzx_normalize_ext(ext);
-        if(!mmzx_has_known_ext(ext)) {
-            free(dup_name_new);
-            continue;
-        }
-
-        const char *dup_name_old = 0;
-        if(!strcmp(ditem->d_name, dup_name_new)) {
-            // names are equal
-            dup_name_old = dup_name_new;
-        } else {
-            dup_name_old = strndup(ditem->d_name, curnamlen);
-            if(!dup_name_old) {
+        {
+            char *const ext = &dup_name_new[extoffset];
+            mmzx_normalize_ext(ext);
+            if(!mmzx_has_known_ext(ext)) {
                 free(dup_name_new);
-                fprintf(stderr, "ERROR: %s: OOM during recursion\n", path);
-                goto names_cleanup;
+                continue;
             }
         }
 
-        if(names.capacity <= names.length + 1) {
+        mmzx_name_ent_t curent;
+        curent.orig_name = 0;
+        curent.name = dup_name_new;
+        // find prefix to prune
+        if(names.length > 0) {
+            mmzx_update_llcs(&llcs, firstname, curent.name);
+        } else {
+            firstname = curent.name;
+            llcs = curnamlen;
+        }
+
+        if(!strcmp(ditem->d_name, curent.name)) {
+            // names are equal
+            curent.orig_name = curent.name;
+        } else {
+            curent.orig_name = strndup(ditem->d_name, curnamlen);
+            if(!curent.orig_name) goto curname_cleanup;
+        }
+
+        if(names.capacity <= names.length) {
             // allocate more
             if(!names.capacity)
                 names.capacity = 64;
             else
                 names.capacity <<= 1;
             mmzx_name_ent_t *newnames = reallocarray(names.names, names.capacity, sizeof(mmzx_name_ent_t));
-            if(!newnames) {
-                free((char *)dup_name_old);
-                if(dup_name_old != dup_name_new) free(dup_name_new);
-                fprintf(stderr, "ERROR: %s: OOM during recursion\n", path);
-                goto names_cleanup;
-            }
+            if(!newnames) goto curname_cleanup;
             names.names = newnames;
         }
 
-        names.names[names.length].orig_name = dup_name_old;
-        names.names[names.length].name = dup_name_new;
+        mmzx_copy_name_ent(&names.names[names.length], &curent);
         names.length++;
-        // note: we need a sentinel entry at the end so that lcs knows when to stop
-        names.names[names.length].orig_name = 0;
-        names.names[names.length].name = 0;
+        continue;
+
+        curname_cleanup:
+            mmzx_deinit_name_ent(&curent);
+            fprintf(stderr, "ERROR: %s: OOM during recursion\n", path);
+            goto names_cleanup;
     }
 
     if(!names.names)
@@ -141,9 +144,8 @@ void mmzx_run_on_dir(DIR *dir, const char *path) {
     printf("%s:\n", path);
 
     // prune prefix
-    const size_t lcs = mmzx_lcs_map((const void *)names.names, sizeof(mmzx_name_ent_t), mmzx_extract_name);
-
-    for(mmzx_name_ent_t *item = names.names; item->name; ++item) {
+    for(size_t i = 0; i < names.length; ++i) {
+        mmzx_name_ent_t *item = &names.names[i];
         const char *old_name = item->orig_name;
         // TODO: don't run chmod on symlinks (this could break links pointing to folders)
         if(-1 == fchmodat(cur_dirfd, old_name, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, 0)) {
@@ -156,7 +158,7 @@ void mmzx_run_on_dir(DIR *dir, const char *path) {
             }
         }
 
-        const char *new_name = &item->name[lcs];
+        const char *new_name = &item->name[llcs];
         if(!strcmp(old_name, new_name) || !new_name[0]) continue;
 
         printf("\tMV %s -> %s; ", old_name, new_name);

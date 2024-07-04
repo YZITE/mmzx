@@ -29,7 +29,8 @@ cflags = [
   '-Wall',
   '-Werror=return-type',
   '-Werror=type-limits',
-  '-Werror=incompatible-pointer-types'
+  '-Werror=incompatible-pointer-types',
+  '-Werror=implicit-function-declaration'
 ]
 
 if res_largefile

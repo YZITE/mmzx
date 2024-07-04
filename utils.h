@@ -16,16 +16,19 @@ void mmzx_normalize_ext(char *ext);
 // check if the file extension is known
 bool mmzx_has_known_ext(const char *ext);
 
-// find leading common substring length
-size_t mmzx_lcs(const char *const *items);
-
-// find leading common substring length, on mapped entries
-size_t mmzx_lcs_map(const void *items, size_t itemlen, const char *mapfn(const void *));
+// update leading common substring
+void mmzx_update_llcs(size_t *retlen, const char *first, const char *next);
 
 typedef struct {
     const char *orig_name;
     const char *name;
 } mmzx_name_ent_t;
+
+// note: this doesn't allocate any memory
+static inline void mmzx_copy_name_ent(mmzx_name_ent_t *dst, mmzx_name_ent_t *src) {
+    dst->orig_name = src->orig_name;
+    dst->name = src->name;
+}
 
 void mmzx_deinit_name_ent(mmzx_name_ent_t *self);
 
@@ -36,4 +39,3 @@ typedef struct {
 } mmzx_names_t;
 
 void mmzx_deinit_names(mmzx_names_t *self);
-

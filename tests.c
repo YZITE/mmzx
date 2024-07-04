@@ -20,24 +20,14 @@ Test(mmzx_tests, normalize) {
 }
 
 Test(mmzx_tests, lcs) {
-    static const char *const a[] = {
-        "allemam",
-        "allem",
-        "allex",
-        "allexifiy",
-        "allexa",
-        0
-    };
+    size_t llcs = 7;
+    mmzx_update_llcs(&llcs, "allemam", "allem");
+    mmzx_update_llcs(&llcs, "allemam", "allex");
+    mmzx_update_llcs(&llcs, "allemam", "allexifiy");
+    mmzx_update_llcs(&llcs, "allemam", "allexa");
+    cr_assert(eq(u64, 4, llcs));
 
-    cr_assert(eq(u64, 4, mmzx_lcs(a)));
-
-    static const char *const b[] = {
-        "allemam",
-        "allex",
-        "b",
-        "bonk",
-        0
-    };
-
-    cr_assert(eq(u64, 0, mmzx_lcs(b)));
+    mmzx_update_llcs(&llcs, "allemam", "b");
+    mmzx_update_llcs(&llcs, "allemam", "bonk");
+    cr_assert(eq(u64, 0, llcs));
 }
