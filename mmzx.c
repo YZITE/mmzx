@@ -38,11 +38,7 @@ void mmzx_run_on_dir(DIR *dir, const char *path) {
         const size_t curnamlen = strlen(ditem->d_name);
 
         if(ditem->d_type == DT_DIR) {
-            const int next_dirfd = openat(cur_dirfd, ditem->d_name, O_RDONLY | O_NDELAY | O_DIRECTORY | O_CLOEXEC
-#ifdef YHAS_O_LARGEFILE
-                | O_LARGEFILE
-#endif
-            );
+            const int next_dirfd = openat(cur_dirfd, ditem->d_name, O_RDONLY | O_NDELAY | O_DIRECTORY | O_CLOEXEC);
             DIR *next_dir = fdopendir(next_dirfd);
             if(!next_dir) {
                 if(next_dirfd >= 0) {
