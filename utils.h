@@ -22,6 +22,7 @@ void mmzx_update_llcs(size_t *retlen, const char *first, const char *next);
 typedef struct {
     const char *orig_name;
     const char *name;
+    bool islnk;
 } mmzx_name_ent_t;
 
 // note: this doesn't allocate any memory

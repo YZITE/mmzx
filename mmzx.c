@@ -97,6 +97,7 @@ void mmzx_run_on_dir(DIR *dir, const char *path) {
         mmzx_name_ent_t curent;
         curent.orig_name = 0;
         curent.name = dup_name_new;
+        curent.islnk = (ditem->d_type == DT_LNK);
         // find prefix to prune
         if(names.length > 0) {
             mmzx_update_llcs(&llcs, firstname, curent.name);
@@ -143,8 +144,7 @@ void mmzx_run_on_dir(DIR *dir, const char *path) {
     for(size_t i = 0; i < names.length; ++i) {
         mmzx_name_ent_t *item = &names.names[i];
         const char *old_name = item->orig_name;
-        // TODO: don't run chmod on symlinks (this could break links pointing to folders)
-        if(-1 == fchmodat(cur_dirfd, old_name, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, 0)) {
+        if((!item->islnk) && -1 == fchmodat(cur_dirfd, old_name, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, 0)) {
             switch(errno) {
                 case ENOENT:
                     continue;
