@@ -33,6 +33,7 @@ bool mmzx_has_known_ext(const char *ext) {
         "avi",
         "jpg",
         "mts",
+        "pdf",
         0
     };
 
